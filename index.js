@@ -10,6 +10,7 @@ const PORT = process.env.PORT;
 app.use(cors())
 app.use(express.json())
 app.use(bearerToken())
+app.use(express.static('public'));
 
 db.getConnection((err, connection) => {
     if (err) {

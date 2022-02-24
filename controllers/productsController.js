@@ -1,4 +1,5 @@
 const { db, dbQuery } = require('../config/database')
+const { uploader } = require('../config/uploader');
 
 module.exports = {
     getData: async (req, res) => {
@@ -68,8 +69,66 @@ module.exports = {
                 idcategory = ${req.body.idcategory}
                 WHERE id = ${req.params.id};`)
 
-                res.status(200).send(editProducts)
+            res.status(200).send(editProducts)
 
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({
+                success: false,
+                message: "Failed ❌",
+                error: error
+            })
+        }
+    },
+    addProducts: async (req, res) => {
+        try {
+            const uploadFile = uploader("/imgProducts", "IMGUSER").array("images", 1)
+            uploadFile(req, res, async (error) => {
+                try {
+                    console.log("file", req.files)
+                    console.log("req.body", req.body.data)
+                    let { title, author, idcategory, year, desc, status } = JSON.parse(req.body.data)
+                    let insertSQL = await dbQuery(`INSERT INTO books (id, idcategory, title, author, image, description, year, status) VALUES
+                    (null,
+                        ${idcategory},
+                        ${db.escape(title)},
+                        ${db.escape(author)},
+                        ${db.escape(`http://localhost:2400/imgProducts/${req.files[0].filename}`)},
+                        ${db.escape(desc)},
+                        ${year},
+                        'Active');`)
+                    res.status(200).send({
+                        success: true,
+                        message: "add book success"
+                    })
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send({
+                        success: true,
+                        message: "Failed ❌",
+                        error: ""
+                    });
+                }
+            })
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({
+                success: true,
+                message: "Failed ❌",
+                error: ""
+            });
+        }
+    },
+    deleteProducts: async (req, res) => {
+        try {
+            let deleteProducts = await dbQuery(`UPDATE library.books SET status = "Deactive" WHERE id = ${req.params.id};`)
+            res.status(200).send({
+                success: true,
+                message: "Delete products success",
+                error: '',
+                deleteProducts: deleteProducts
+            })
+            console.log("deleteProducts", deleteProducts)
         } catch (error) {
             console.log(error)
             res.status(500).send({
